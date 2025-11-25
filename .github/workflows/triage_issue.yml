@@ -7,10 +7,14 @@ on:
 jobs:
   track_issue:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      projects: write
     steps:
       - name: Get project data
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh api graphql -f query='
             query {
@@ -39,7 +43,7 @@ jobs:
 
       - name: Add issue to project
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ github.token }}
           ISSUE_ID: ${{ github.event.issue.node_id }}
         run: |
           item_id="$( gh api graphql -f query='

@@ -2,6 +2,7 @@ import { copyFile, mkdir, readdir } from "fs/promises"
 import { existsSync } from "fs"
 import { join as joinPath } from "path"
 import { packsDir } from "../app.js"
+import { sortEmojis } from "../sorting.js"
 
 export const getAllExistingTwemoji = async () => {
     let out: string[] = []
@@ -22,7 +23,10 @@ export const copyTwemojiTo = async (outDir: string) => {
 
     if (!existsSync(outDir)) await mkdir(outDir)
 
-    const twemojiSvgs = await readdir(twemojiDir)
+    let twemojiSvgs = await readdir(twemojiDir)
+
+    // Sort emojis according to Emoji 15 ordering
+    twemojiSvgs = await sortEmojis(twemojiSvgs)
 
     for (const emoji of twemojiSvgs) {
         const inPath = joinPath(twemojiDir, emoji)

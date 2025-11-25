@@ -2,6 +2,7 @@ import { existsSync } from "fs"
 import { copyFile, mkdir, readdir } from "fs/promises"
 import { join as joinPath } from "path"
 import { packsDir } from "../app.js"
+import { sortEmojis } from "../sorting.js"
 import { VARIANT_SELECTOR_EMOJI } from "../constants.js"
 
 export const copyMutantTo = async (outDir: string) => {
@@ -9,11 +10,10 @@ export const copyMutantTo = async (outDir: string) => {
 
     if (!existsSync(outDir)) await mkdir(outDir)
 
-    const mutantSvgs = await readdir(mutantDir)
+    let mutantSvgs = await readdir(mutantDir)
 
-    for (const emoji of mutantSvgs) {
-        const inPath = joinPath(mutantDir, emoji)
-
+    // Normalize filenames first
+    const normalizedSvgs = mutantSvgs.map((emoji) => {
         const codepoints = emoji.split("-")
         const normalizedFilename =
             codepoints.length === 2
@@ -21,7 +21,23 @@ export const copyMutantTo = async (outDir: string) => {
                       .filter((x) => x !== VARIANT_SELECTOR_EMOJI)
                       .join("-")
                 : codepoints.join("-")
-        const outPath = joinPath(outDir, normalizedFilename)
+        return { original: emoji, normalized: normalizedFilename }
+    })
+
+    // Sort by normalized filename
+    const sortedNormalized = await sortEmojis(
+        normalizedSvgs.map((x) => x.normalized)
+    )
+
+    // Create reverse mapping
+    const normalizedToOriginal = new Map(
+        normalizedSvgs.map((x) => [x.normalized, x.original])
+    )
+
+    for (const normalized of sortedNormalized) {
+        const original = normalizedToOriginal.get(normalized)!
+        const inPath = joinPath(mutantDir, original)
+        const outPath = joinPath(outDir, normalized)
 
         await copyFile(inPath, outPath)
     }
