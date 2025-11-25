@@ -2,6 +2,7 @@ import { existsSync } from "fs"
 import { copyFile, mkdir, readdir, readFile, writeFile } from "fs/promises"
 import { join as joinPath } from "path"
 import { packsDir } from "../app.js"
+import { sortEmojis } from "../sorting.js"
 import {
     FLUENT_TONE_DIRS,
     FLUENT_TONE_DIR_TO_CODEPOINT,
@@ -96,9 +97,20 @@ const copySingle = async (
 
 export const copyFluent = async (flavorName: string, toPath: string) => {
     const fluentEmojiDir = joinPath(packsDir, "fluent", "assets")
-    const emojis = await readdir(fluentEmojiDir)
+    let emojis = await readdir(fluentEmojiDir)
 
     if (!existsSync(toPath)) await mkdir(toPath)
+
+    // Process all emojis to get their filenames
+    const emojiFilenames: string[] = []
+    const emojiMetadata: Map<
+        string,
+        {
+            emojiPath: string
+            codepoints: string[]
+            hasSkinTones: boolean
+        }
+    > = new Map()
 
     for (let emoji of emojis) {
         const emojiPath = joinPath(fluentEmojiDir, emoji)
@@ -111,12 +123,43 @@ export const copyFluent = async (flavorName: string, toPath: string) => {
         )
         const codepoints = metadataFile.unicode.split(" ")
 
-        const hasSkinTones = emojiDirContents.includes("Medium-Dark") // name unlikely to be reused
+        const hasSkinTones = emojiDirContents.includes("Medium-Dark")
 
-        if (hasSkinTones) {
-            copyWithSkinTones(toPath, flavorName, emojiPath, codepoints)
+        const filename = hasSkinTones
+            ? codepoints.join("-") + ".svg"
+            : codepoints
+                  .filter((x) => x !== VARIANT_SELECTOR_EMOJI)
+                  .join("-") + ".svg"
+
+        emojiFilenames.push(filename)
+        emojiMetadata.set(filename, {
+            emojiPath,
+            codepoints,
+            hasSkinTones,
+        })
+    }
+
+    // Sort emojis according to Emoji 15 ordering
+    const sortedFilenames = await sortEmojis(emojiFilenames)
+
+    // Copy emojis in sorted order
+    for (const filename of sortedFilenames) {
+        const metadata = emojiMetadata.get(filename)!
+
+        if (metadata.hasSkinTones) {
+            await copyWithSkinTones(
+                toPath,
+                flavorName,
+                metadata.emojiPath,
+                metadata.codepoints
+            )
         } else {
-            copySingle(toPath, flavorName, emojiPath, codepoints)
+            await copySingle(
+                toPath,
+                flavorName,
+                metadata.emojiPath,
+                metadata.codepoints
+            )
         }
     }
 }
