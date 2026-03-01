@@ -26,7 +26,7 @@ It is also recommended to run `git submodule update` after you pull from upstrea
 
 -   [Stoat Project Board](https://github.com/orgs/stoatchat/discussions) (Submit feature requests here)
 -   [Revolt Testers Server](https://app.revolt.chat/invite/Testers)
--   [Contribution Guide](https://developers.stoat.chat/)
+-   [Contribution Guide](https://developers.stoat.chat/developing/contrib)
 
 ## Quick Start
 
