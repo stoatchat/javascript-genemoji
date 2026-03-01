@@ -1,8 +1,8 @@
-# Revolt genemoji
+# Stoat genemoji
 
 ## Description
 
-genemoji is a small CLI tool to generate Revolt's emoji asset folder. It transforms the various folder structures of the emoji packs into a unified directory structure.
+genemoji is a small CLI tool to generate Stoat's emoji asset folder. It transforms the various folder structures of the emoji packs into a unified directory structure.
 
 ## Supported Packs
 
@@ -20,13 +20,13 @@ It is also recommended to run `git submodule update` after you pull from upstrea
 
 ### genemoji
 
--   [The Metadata We Use to Power Emoji in Revolt](https://github.com/googlefonts/emoji-metadata)
+-   [The Metadata We Use to Power Emoji in Stoat](https://github.com/googlefonts/emoji-metadata)
 
-### Revolt
+### Stoat
 
--   [Revolt Project Board](https://github.com/revoltchat/revolt/discussions) (Submit feature requests here)
+-   [Stoat Project Board](https://github.com/orgs/stoatchat/discussions) (Submit feature requests here)
 -   [Revolt Testers Server](https://app.revolt.chat/invite/Testers)
--   [Contribution Guide](https://developers.revolt.chat/contributing)
+-   [Contribution Guide](https://developers.stoat.chat/)
 
 ## Quick Start
 
