@@ -8,7 +8,7 @@ genemoji is a small CLI tool to generate Stoat's emoji asset folder. It transfor
 
 -   [Fluent](https://github.com/microsoft/fluentui-emoji)
 -   [Twemoji](https://twemoji.twitter.com)
--   [Mutant Remix](https://mutant.revolt.chat)
+-   [Mutant Remix](https://mutant.stoat.chat)
 -   [Noto Color Emoji](https://fonts.google.com/noto/specimen/Noto+Emoji)
 
 ## Submodule Hint
