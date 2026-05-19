@@ -4,14 +4,25 @@ on:
   pull_request_target:
     types: [opened, synchronize, ready_for_review, review_requested]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  projects: write
+
 jobs:
   track_pr:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Get project data
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+      - name: Authenticate GitHub CLI
         run: |
+          echo "${{ github.token }}" | gh auth login --with-token
+
+      - name: Get project data
+        run: |
+          set -eo pipefail
           gh api graphql -f query='
             query {
               organization(login: "revoltchat"){
@@ -33,15 +44,15 @@ jobs:
               }
             }' > project_data.json
 
-          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
-          echo 'STATUS_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
-          echo 'INCOMING_OPTION_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="🆕 Untriaged") |.id' project_data.json) >> $GITHUB_ENV
+          echo "PROJECT_ID=$(jq -r '.data.organization.projectV2.id' project_data.json)" >> $GITHUB_ENV
+          echo "STATUS_FIELD_ID=$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== \"Status\") | .id' project_data.json)" >> $GITHUB_ENV
+          echo "INCOMING_OPTION_ID=$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== \"Status\") | .options[] | select(.name==\"🆕 Untriaged\") | .id' project_data.json)" >> $GITHUB_ENV
 
       - name: Add PR to project
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
           PR_ID: ${{ github.event.pull_request.node_id }}
         run: |
+          set -eo pipefail
           item_id="$( gh api graphql -f query='
             mutation($project:ID!, $pr:ID!) {
               addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
@@ -54,9 +65,8 @@ jobs:
           echo 'ITEM_ID='$item_id >> $GITHUB_ENV
 
       - name: Set fields
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
+          set -eo pipefail
           gh api graphql -f query='
             mutation (
               $project: ID!
