@@ -2,6 +2,7 @@ import { copyFile, mkdir, readdir } from "fs/promises"
 import { existsSync } from "fs"
 import { join as joinPath } from "path"
 import { packsDir } from "../app.js"
+import { withAndWithoutVariationSelectors } from "../variation-selectors.js"
 
 export const getAllExistingTwemoji = async () => {
     let out: string[] = []
@@ -26,7 +27,15 @@ export const copyTwemojiTo = async (outDir: string) => {
 
     for (const emoji of twemojiSvgs) {
         const inPath = joinPath(twemojiDir, emoji)
-        const outPath = joinPath(outDir, emoji)
-        if (!existsSync(outPath)) await copyFile(inPath, outPath)
+        const outputFilenames = withAndWithoutVariationSelectors(emoji)
+        const existingPackAsset = outputFilenames
+            .map((filename) => joinPath(outDir, filename))
+            .find((path) => existsSync(path))
+        const source = existingPackAsset ?? inPath
+
+        for (const filename of outputFilenames) {
+            const outPath = joinPath(outDir, filename)
+            if (!existsSync(outPath)) await copyFile(source, outPath)
+        }
     }
 }

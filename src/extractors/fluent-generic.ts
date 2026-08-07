@@ -5,9 +5,9 @@ import { packsDir } from "../app.js"
 import {
     FLUENT_TONE_DIRS,
     FLUENT_TONE_DIR_TO_CODEPOINT,
-    VARIANT_SELECTOR_EMOJI,
 } from "../constants.js"
 import { MSFTMetadataFile } from "../types.js"
+import { withAndWithoutVariationSelectors } from "../variation-selectors.js"
 
 // We embed the 3D PNGs in an SVG so that we can use the same URLs for every pack
 const embedPngInSvg = (
@@ -49,13 +49,24 @@ const copyWithSkinTones = async (
         )[0]
 
         const inPath = joinPath(toneDir, fileName)
-        const outPath = joinPath(copyTo, codepointOfEmoji.join("-") + ".svg")
+        const outputFilenames = withAndWithoutVariationSelectors(
+            codepointOfEmoji.join("-") + ".svg"
+        )
 
         if (fileName.endsWith(".png")) {
             const pngData = await readFile(inPath)
-            await writeFile(outPath, embedPngInSvg(pngData))
+            const svg = embedPngInSvg(pngData)
+            await Promise.all(
+                outputFilenames.map((filename) =>
+                    writeFile(joinPath(copyTo, filename), svg)
+                )
+            )
         } else {
-            await copyFile(inPath, outPath)
+            await Promise.all(
+                outputFilenames.map((filename) =>
+                    copyFile(inPath, joinPath(copyTo, filename))
+                )
+            )
         }
     }
 }
@@ -80,17 +91,24 @@ const copySingle = async (
     )[0]
 
     const inPath = joinPath(assetDir, fileName)
-    const outPath = joinPath(
-        copyTo,
-        codepoints.filter((x) => x !== VARIANT_SELECTOR_EMOJI).join("-") +
-            ".svg"
+    const outputFilenames = withAndWithoutVariationSelectors(
+        codepoints.join("-") + ".svg"
     )
 
     if (fileName.endsWith(".png")) {
         const pngData = await readFile(inPath)
-        await writeFile(outPath, embedPngInSvg(pngData))
+        const svg = embedPngInSvg(pngData)
+        await Promise.all(
+            outputFilenames.map((filename) =>
+                writeFile(joinPath(copyTo, filename), svg)
+            )
+        )
     } else {
-        await copyFile(inPath, outPath)
+        await Promise.all(
+            outputFilenames.map((filename) =>
+                copyFile(inPath, joinPath(copyTo, filename))
+            )
+        )
     }
 }
 
@@ -114,9 +132,14 @@ export const copyFluent = async (flavorName: string, toPath: string) => {
         const hasSkinTones = emojiDirContents.includes("Medium-Dark") // name unlikely to be reused
 
         if (hasSkinTones) {
-            copyWithSkinTones(toPath, flavorName, emojiPath, codepoints)
+            await copyWithSkinTones(
+                toPath,
+                flavorName,
+                emojiPath,
+                codepoints
+            )
         } else {
-            copySingle(toPath, flavorName, emojiPath, codepoints)
+            await copySingle(toPath, flavorName, emojiPath, codepoints)
         }
     }
 }

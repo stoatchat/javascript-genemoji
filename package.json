@@ -5,6 +5,7 @@
     "scripts": {
         "start": "node dist/app.js",
         "build": "tsc -p tsconfig.json --pretty",
+        "test": "npm run build && node --test test/*.test.js",
         "dev": "tsc -p tsconfig.json --pretty --watch",
         "format": "prettier --check --ignore-path .gitignore .",
         "format:fix": "prettier --write --ignore-path .gitignore ."
