@@ -5,6 +5,7 @@ import { copyFluent } from "./extractors/fluent-generic.js"
 import { copyTwemojiTo } from "./extractors/twemoji.js"
 import { copyNotoTo } from "./extractors/noto.js"
 import { copyMutantTo } from "./extractors/mutant.js"
+import { ensureVariationSelectorAliases } from "./variation-selectors.js"
 
 //#region Constants and Setup
 
@@ -23,7 +24,9 @@ if (!fluentExists) {
 export const outDir = joinPath(cwd, "emoji")
 
 if (exists(outDir)) await fs.rm(outDir, { recursive: true })
-fs.mkdir(outDir)
+await fs.mkdir(outDir)
+
+const generatedPackDirs: string[] = []
 
 //#endregion Constants and Setup
 
@@ -34,6 +37,7 @@ console.log("pack-twemoji: Generating pack twemoji...")
 
 const twemojiOutDir = joinPath(outDir, "twemoji")
 await copyTwemojiTo(twemojiOutDir)
+generatedPackDirs.push(twemojiOutDir)
 
 console.timeEnd("pack-twemoji")
 
@@ -59,6 +63,7 @@ for (const fluentType of fluentTypes) {
         `pack-${flavorId}: Generating twemoji placeholders for missing files...`
     )
     await copyTwemojiTo(packOutDir)
+    generatedPackDirs.push(packOutDir)
 
     console.timeEnd(`pack-${flavorId}`)
 }
@@ -75,6 +80,7 @@ await copyNotoTo(notoOutDir)
 
 console.log(`pack-noto: Generating twemoji placeholders for missing files...`)
 await copyTwemojiTo(notoOutDir)
+generatedPackDirs.push(notoOutDir)
 
 console.timeEnd("pack-noto")
 
@@ -90,7 +96,13 @@ await copyMutantTo(mutantOutDir)
 
 console.log(`pack-mutant: Generating twemoji placeholders for missing files...`)
 await copyTwemojiTo(mutantOutDir)
+generatedPackDirs.push(mutantOutDir)
 
 console.timeEnd("pack-mutant")
 
 //#endregion Mutant Remix
+
+console.time("variation-selector-aliases")
+console.log("Generating variation-selector aliases...")
+await ensureVariationSelectorAliases(generatedPackDirs)
+console.timeEnd("variation-selector-aliases")
