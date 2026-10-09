@@ -39,7 +39,7 @@ bun start
 
 When genemoji is finished generating the packs, the output will be located in `emoji/`, split up by pack ID.
 
-The coverage report (`bun run report`) is [published to GitHub Pages](https://stoatchat.github.io/genemoji).
+The coverage report (`bun run report`) is [published to GitHub Pages](https://stoatchat.github.io/javascript-genemoji).
 
 ## CLI Commands
 
