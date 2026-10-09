@@ -16,18 +16,27 @@ const normalizeNotoFilename = (filename: string) =>
             .split("_")
     )
 
-export const copyNotoTo = async (outDir: string) => {
-    const notoDir = joinPath(packsDir, "noto", "2D", "svg")
+// Noto keeps its flags apart from the other 2D emoji, for some reason
+const NOTO_2D_DIRS = [
+    ["2D", "svg"],
+    ["third_party", "region-flags", "waved-svg"],
+]
 
+export const copyNotoTo = async (outDir: string) => {
     if (!existsSync(outDir)) await mkdir(outDir)
 
-    const notoSvgs = (await readdir(notoDir)).filter((x) => x.endsWith(".svg"))
+    for (const dir of NOTO_2D_DIRS) {
+        const notoDir = joinPath(packsDir, "noto", ...dir)
+        const notoSvgs = (await readdir(notoDir)).filter((x) =>
+            x.endsWith(".svg")
+        )
 
-    for (const emoji of notoSvgs) {
-        const inPath = joinPath(notoDir, emoji)
-        const outPath = joinPath(outDir, normalizeNotoFilename(emoji))
+        for (const emoji of notoSvgs) {
+            const inPath = joinPath(notoDir, emoji)
+            const outPath = joinPath(outDir, normalizeNotoFilename(emoji))
 
-        await copyFile(inPath, outPath)
+            await copyFile(inPath, outPath)
+        }
     }
 }
 
