@@ -3,16 +3,16 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "start": "node dist/app.js",
-        "build": "tsc -p tsconfig.json --pretty",
-        "test": "npm run build && node --test test/*.test.js",
-        "dev": "tsc -p tsconfig.json --pretty --watch",
+        "start": "bun src/app.ts",
+        "dev": "bun --watch src/app.ts",
+        "typecheck": "tsc --noEmit",
         "format": "prettier --check --ignore-path .gitignore .",
         "format:fix": "prettier --write --ignore-path .gitignore ."
     },
     "type": "module",
     "devDependencies": {
-        "@types/node": "^18.7.1",
-        "typescript": "^4.7.4"
+        "@types/bun": "^1.3.0",
+        "prettier": "^2.8.8",
+        "typescript": "^5.6.3"
     }
 }
