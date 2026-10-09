@@ -1,23 +1,47 @@
 import { existsSync } from "fs"
-import { copyFile, mkdir, readdir } from "fs/promises"
+import { copyFile, mkdir, readdir, readFile, writeFile } from "fs/promises"
 import { join as joinPath } from "path"
 import { packsDir } from "../app.js"
+import { embedPngInSvg } from "../embed-png.js"
+import { toFilename } from "../unicode.js"
+
+const NOTO_3D_PNG_SIZE = "128"
+
+// emoji_u00a9_fe0f.svg -> a9-fe0f.svg
+const normalizeNotoFilename = (filename: string) =>
+    toFilename(
+        filename
+            .replace("emoji_u", "")
+            .replace(/\.(svg|png)$/, "")
+            .split("_")
+    )
 
 export const copyNotoTo = async (outDir: string) => {
-    const notoDir = joinPath(packsDir, "noto", "svg")
+    const notoDir = joinPath(packsDir, "noto", "2D", "svg")
 
     if (!existsSync(outDir)) await mkdir(outDir)
 
-    const notoSvgs = await readdir(notoDir)
+    const notoSvgs = (await readdir(notoDir)).filter((x) => x.endsWith(".svg"))
 
     for (const emoji of notoSvgs) {
         const inPath = joinPath(notoDir, emoji)
-
-        const normalizedFilename = emoji
-            .replace("emoji_u", "")
-            .replaceAll("_", "-")
-        const outPath = joinPath(outDir, normalizedFilename)
+        const outPath = joinPath(outDir, normalizeNotoFilename(emoji))
 
         await copyFile(inPath, outPath)
+    }
+}
+
+export const copyNoto3DTo = async (outDir: string) => {
+    const notoDir = joinPath(packsDir, "noto", "3D", "png", NOTO_3D_PNG_SIZE)
+
+    if (!existsSync(outDir)) await mkdir(outDir)
+
+    const notoPngs = (await readdir(notoDir)).filter((x) => x.endsWith(".png"))
+
+    for (const emoji of notoPngs) {
+        const inPath = joinPath(notoDir, emoji)
+        const outPath = joinPath(outDir, normalizeNotoFilename(emoji))
+
+        await writeFile(outPath, embedPngInSvg(await readFile(inPath)))
     }
 }

@@ -7,9 +7,9 @@ genemoji is a small CLI tool to generate Stoat's emoji asset folder. It transfor
 ## Supported Packs
 
 -   [Fluent](https://github.com/microsoft/fluentui-emoji)
--   [Twemoji](https://twemoji.twitter.com)
+-   [Twemoji](https://github.com/jdecked/twemoji)
 -   [Mutant Remix](https://mutant.stoat.chat)
--   [Noto Color Emoji](https://fonts.google.com/noto/specimen/Noto+Emoji)
+-   [Noto Emoji](https://github.com/googlefonts/noto-emoji)
 
 ## Submodule Hint
 
@@ -39,12 +39,15 @@ bun start
 
 When genemoji is finished generating the packs, the output will be located in `emoji/`, split up by pack ID.
 
+The coverage report (`bun run report`) is [published to GitHub Pages](https://stoatchat.github.io/genemoji).
+
 ## CLI Commands
 
-| Command              | Description                                                      |
-| -------------------- | ---------------------------------------------------------------- |
-| `bun start`          | Generate the emoji packs.                                        |
-| `bun dev`            | Generate the emoji packs, re-running on source changes.          |
-| `bun run typecheck`  | Type-check the sources with TypeScript.                          |
-| `bun run format`     | Run Prettier on the client. (check only)                         |
-| `bun run format:fix` | Run Prettier on the client. (automatically fixes bad formatting) |
+| Command              | Description                                                          |
+| -------------------- | -------------------------------------------------------------------- |
+| `bun start`          | Generate the emoji packs.                                            |
+| `bun dev`            | Generate the emoji packs, re-running on source changes.              |
+| `bun run report`     | Write an HTML coverage report into `emoji/` (run after `bun start`). |
+| `bun run typecheck`  | Type-check the sources with TypeScript.                              |
+| `bun run format`     | Run Prettier on the client. (check only)                             |
+| `bun run format:fix` | Run Prettier on the client. (automatically fixes bad formatting)     |

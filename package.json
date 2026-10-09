@@ -5,6 +5,7 @@
     "scripts": {
         "start": "bun src/app.ts",
         "dev": "bun --watch src/app.ts",
+        "report": "bun src/report.ts",
         "typecheck": "tsc --noEmit",
         "format": "prettier --check --ignore-path .gitignore .",
         "format:fix": "prettier --write --ignore-path .gitignore ."

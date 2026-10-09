@@ -2,21 +2,11 @@ import { existsSync } from "fs"
 import { copyFile, mkdir, readdir, readFile, writeFile } from "fs/promises"
 import { join as joinPath } from "path"
 import { packsDir } from "../app.js"
-import {
-    FLUENT_TONE_DIRS,
-    FLUENT_TONE_DIR_TO_CODEPOINT,
-} from "../constants.js"
+import { FLUENT_TONE_DIRS, FLUENT_TONE_DIR_TO_CODEPOINT } from "../constants.js"
+import { embedPngInSvg } from "../embed-png.js"
 import { MSFTMetadataFile } from "../types.js"
+import { toFilename } from "../unicode.js"
 import { withAndWithoutVariationSelectors } from "../variation-selectors.js"
-
-// We embed the 3D PNGs in an SVG so that we can use the same URLs for every pack
-const embedPngInSvg = (
-    png: Buffer
-) => `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<image width="32" height="32" xlink:href="data:image/png;base64,${png.toString(
-    "base64"
-)}"/>
-</svg>`
 
 const copyWithSkinTones = async (
     copyTo: string,
@@ -50,7 +40,7 @@ const copyWithSkinTones = async (
 
         const inPath = joinPath(toneDir, fileName)
         const outputFilenames = withAndWithoutVariationSelectors(
-            codepointOfEmoji.join("-") + ".svg"
+            toFilename(codepointOfEmoji)
         )
 
         if (fileName.endsWith(".png")) {
@@ -92,7 +82,7 @@ const copySingle = async (
 
     const inPath = joinPath(assetDir, fileName)
     const outputFilenames = withAndWithoutVariationSelectors(
-        codepoints.join("-") + ".svg"
+        toFilename(codepoints)
     )
 
     if (fileName.endsWith(".png")) {
@@ -132,12 +122,7 @@ export const copyFluent = async (flavorName: string, toPath: string) => {
         const hasSkinTones = emojiDirContents.includes("Medium-Dark") // name unlikely to be reused
 
         if (hasSkinTones) {
-            await copyWithSkinTones(
-                toPath,
-                flavorName,
-                emojiPath,
-                codepoints
-            )
+            await copyWithSkinTones(toPath, flavorName, emojiPath, codepoints)
         } else {
             await copySingle(toPath, flavorName, emojiPath, codepoints)
         }

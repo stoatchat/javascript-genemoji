@@ -3,9 +3,12 @@ import fs from "fs/promises"
 import { existsSync as exists } from "fs"
 import { copyFluent } from "./extractors/fluent-generic.js"
 import { copyTwemojiTo } from "./extractors/twemoji.js"
-import { copyNotoTo } from "./extractors/noto.js"
+import { copyNoto3DTo, copyNotoTo } from "./extractors/noto.js"
 import { copyMutantTo } from "./extractors/mutant.js"
-import { ensureVariationSelectorAliases } from "./variation-selectors.js"
+import {
+    ensureUnicodeForms,
+    ensureVariationSelectorAliases,
+} from "./variation-selectors.js"
 
 //#region Constants and Setup
 
@@ -72,17 +75,26 @@ for (const fluentType of fluentTypes) {
 
 //#region Noto
 
-console.time("pack-noto")
-console.log("pack-noto: Generating pack noto...")
+const notoTypes: [string, (outDir: string) => Promise<void>][] = [
+    ["noto", copyNotoTo],
+    ["noto-3d", copyNoto3DTo],
+]
 
-const notoOutDir = joinPath(outDir, "noto")
-await copyNotoTo(notoOutDir)
+for (const [packId, copyNoto] of notoTypes) {
+    console.time(`pack-${packId}`)
+    console.log(`pack-${packId}: Generating pack ${packId}...`)
 
-console.log(`pack-noto: Generating twemoji placeholders for missing files...`)
-await copyTwemojiTo(notoOutDir)
-generatedPackDirs.push(notoOutDir)
+    const packOutDir = joinPath(outDir, packId)
+    await copyNoto(packOutDir)
 
-console.timeEnd("pack-noto")
+    console.log(
+        `pack-${packId}: Generating twemoji placeholders for missing files...`
+    )
+    await copyTwemojiTo(packOutDir)
+    generatedPackDirs.push(packOutDir)
+
+    console.timeEnd(`pack-${packId}`)
+}
 
 //#endregion Noto
 
@@ -106,3 +118,8 @@ console.time("variation-selector-aliases")
 console.log("Generating variation-selector aliases...")
 await ensureVariationSelectorAliases(generatedPackDirs)
 console.timeEnd("variation-selector-aliases")
+
+console.time("unicode-forms")
+console.log("Generating every Unicode form of each emoji...")
+await ensureUnicodeForms(generatedPackDirs)
+console.timeEnd("unicode-forms")

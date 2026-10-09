@@ -1,0 +1,45 @@
+name: Publish Report
+
+on:
+    push:
+        branches: [dev]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+concurrency:
+    group: pages
+    cancel-in-progress: false
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: true
+
+            - uses: oven-sh/setup-bun@v2
+
+            - run: bun install --frozen-lockfile
+            - run: bun start
+            - run: bun run report
+
+            - uses: actions/configure-pages@v5
+
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: emoji
+
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - id: deployment
+              uses: actions/deploy-pages@v4
