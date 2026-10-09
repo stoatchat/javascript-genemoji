@@ -2,14 +2,17 @@ import { execSync } from "child_process"
 import { existsSync as exists } from "fs"
 import fs from "fs/promises"
 import { join as joinPath } from "path"
+import sharp from "sharp"
 import { filenameToKey, readEmojiTest, UnicodeEmoji } from "./unicode.js"
 
-// Generates a plain HTML report into emoji/ showing which emoji each pack
+// Generates a plain HTML report into report/ showing which emoji each pack
 // draws itself, which it borrows from twemoji, and which it lacks entirely.
 // Run `bun start` first.
 
 const cwd = process.cwd()
 const outDir = joinPath(cwd, "emoji")
+const reportDir = joinPath(cwd, "report")
+const spriteDir = joinPath(reportDir, "sprites")
 const packsDir = joinPath(cwd, "packs")
 
 const FALLBACK_PACK = "twemoji"
@@ -132,6 +135,100 @@ const sourceVersion = (source: string) => {
 
 //#endregion Pack scan
 
+//#region Sprites
+
+// Pack a spritesheet for eack pack, turns out loading thousands of
+// separate images gets the viewer banned from GitHub Pages
+const SPRITE_COLUMNS = 64
+const SPRITE_TILE = 64
+const PREVIEW_SIZE = 32
+
+type Sprite = { sheet: string; index: number }
+
+// pack id -> normalised key -> position in that pack's sheets
+const sprites = new Map<string, Map<string, Sprite>>()
+
+const renderSheet = async (paths: string[], outPath: string) => {
+    const tiles = await Promise.all(
+        paths.map((path) =>
+            sharp(path, { density: (72 * SPRITE_TILE) / PREVIEW_SIZE })
+                .resize(SPRITE_TILE, SPRITE_TILE, {
+                    fit: "contain",
+                    background: { r: 0, g: 0, b: 0, alpha: 0 },
+                })
+                .png()
+                .toBuffer()
+                .catch(() => null)
+        )
+    )
+
+    await sharp({
+        create: {
+            width: SPRITE_COLUMNS * SPRITE_TILE,
+            height:
+                Math.max(1, Math.ceil(paths.length / SPRITE_COLUMNS)) *
+                SPRITE_TILE,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+        },
+    })
+        .composite(
+            tiles.flatMap((tile, index) =>
+                tile
+                    ? [
+                          {
+                              input: tile,
+                              left: (index % SPRITE_COLUMNS) * SPRITE_TILE,
+                              top:
+                                  Math.floor(index / SPRITE_COLUMNS) *
+                                  SPRITE_TILE,
+                          },
+                      ]
+                    : []
+            )
+        )
+        .webp({ quality: 85, alphaQuality: 90 })
+        .toFile(outPath)
+}
+
+if (exists(reportDir)) await fs.rm(reportDir, { recursive: true })
+await fs.mkdir(spriteDir, { recursive: true })
+
+for (const pack of packs) {
+    const positions = new Map<string, Sprite>()
+    const sheets: [string, [string, string][]][] = [
+        [
+            pack.id,
+            reference
+                .filter((emoji) => pack.entries.has(emoji.key))
+                .map((emoji) => [
+                    emoji.key,
+                    pack.entries.get(emoji.key)!.filename,
+                ]),
+        ],
+        [
+            `${pack.id}-extra`,
+            [...pack.entries]
+                .filter(([key]) => !referenceKeys.has(key))
+                .map(([key, entry]) => [key, entry.filename]),
+        ],
+    ]
+
+    for (const [sheet, entries] of sheets) {
+        console.time(`sprite-${sheet}`)
+        entries.forEach(([key], index) => positions.set(key, { sheet, index }))
+        await renderSheet(
+            entries.map(([, filename]) => joinPath(outDir, pack.id, filename)),
+            joinPath(spriteDir, `${sheet}.webp`)
+        )
+        console.timeEnd(`sprite-${sheet}`)
+    }
+
+    sprites.set(pack.id, positions)
+}
+
+//#endregion Sprites
+
 //#region HTML
 
 const escapeHtml = (text: string) =>
@@ -153,7 +250,16 @@ const page = (title: string, body: string) => `<!doctype html>
 td.fallback, span.fallback { background: #ffff99; }
 td.missing, span.missing { background: #ff9999; }
 span.cell { display: inline-block; width: 32px; height: 32px; margin: 2px; vertical-align: top; }
-img { width: 32px; height: 32px; }
+span.sprite { display: inline-block; width: 32px; height: 32px; vertical-align: top; background-size: ${
+    SPRITE_COLUMNS * PREVIEW_SIZE
+}px auto; }
+${packs
+    .flatMap((pack) => [pack.id, `${pack.id}-extra`])
+    .map(
+        (sheet) =>
+            `span.sprite-${sheet} { background-image: url("sprites/${sheet}.webp"); }`
+    )
+    .join("\n")}
 </style>
 </head>
 <body>
@@ -168,12 +274,16 @@ ${body}
 
 const legend = `<p>Legend: plain = drawn by the pack, <span class="fallback">yellow</span> = twemoji placeholder, <span class="missing">red</span> = not available.</p>`
 
-const image = (pack: Pack, key: string, title: string, prefix = "") => {
-    const entry = pack.entries.get(key)
-    if (!entry) return ""
-    return `<img src="${prefix}${pack.id}/${
-        entry.filename
-    }" alt="" title="${escapeHtml(title)}" loading="lazy">`
+const image = (pack: Pack, key: string, title: string) => {
+    const sprite = sprites.get(pack.id)!.get(key)
+    if (!sprite) return ""
+    const x = (sprite.index % SPRITE_COLUMNS) * PREVIEW_SIZE
+    const y = Math.floor(sprite.index / SPRITE_COLUMNS) * PREVIEW_SIZE
+    return `<span class="sprite sprite-${
+        sprite.sheet
+    }" style="background-position: -${x}px -${y}px" title="${escapeHtml(
+        title
+    )}"></span>`
 }
 
 const emojiTitle = (emoji: UnicodeEmoji) =>
@@ -386,17 +496,17 @@ ${
     )
 }
 
-await fs.writeFile(joinPath(outDir, "index.html"), indexPage())
-await fs.writeFile(joinPath(outDir, "compare.html"), comparePage())
-await fs.writeFile(joinPath(outDir, "gaps.html"), gapsPage())
+await fs.writeFile(joinPath(reportDir, "index.html"), indexPage())
+await fs.writeFile(joinPath(reportDir, "compare.html"), comparePage())
+await fs.writeFile(joinPath(reportDir, "gaps.html"), gapsPage())
 for (const pack of packs) {
-    await fs.writeFile(joinPath(outDir, `${pack.id}.html`), packPage(pack))
+    await fs.writeFile(joinPath(reportDir, `${pack.id}.html`), packPage(pack))
 }
 
 console.log(
     `report: wrote ${packs.length + 3} pages for ${
         reference.length
-    } emoji to emoji/`
+    } emoji to report/`
 )
 
 //#endregion HTML
