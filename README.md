@@ -30,19 +30,21 @@ It is also recommended to run `git submodule update` after you pull from upstrea
 
 ## Quick Start
 
+genemoji runs on [Bun](https://bun.sh).
+
 ```sh
-yarn build
-yarn start
+bun install
+bun start
 ```
 
 When genemoji is finished generating the packs, the output will be located in `emoji/`, split up by pack ID.
 
 ## CLI Commands
 
-| Command           | Description                                                      |
-| ----------------- | ---------------------------------------------------------------- |
-| `yarn dev`        | Start TypeScript watcher, rebuilds on change.                    |
-| `yarn build`      | Build the CLI.                                                   |
-| `yarn start`      | Initiate generation with built CLI.                              |
-| `yarn format`     | Run Prettier on the client. (check only)                         |
-| `yarn format:fix` | Run Prettier on the client. (automatically fixes bad formatting) |
+| Command              | Description                                                      |
+| -------------------- | ---------------------------------------------------------------- |
+| `bun start`          | Generate the emoji packs.                                        |
+| `bun dev`            | Generate the emoji packs, re-running on source changes.          |
+| `bun run typecheck`  | Type-check the sources with TypeScript.                          |
+| `bun run format`     | Run Prettier on the client. (check only)                         |
+| `bun run format:fix` | Run Prettier on the client. (automatically fixes bad formatting) |

@@ -1,16 +1,13 @@
 {
-    "include": [
-        "./src/**/*.ts"
-    ],
+    "include": ["./src/**/*.ts"],
     "compilerOptions": {
-        "target": "ES2021",
-        "module": "esnext",
-        "lib": [
-            "esnext",
-            "dom"
-        ],
-        "moduleResolution": "node",
-        "outDir": "./dist",
+        "target": "ESNext",
+        "module": "Preserve",
+        "moduleResolution": "bundler",
+        "lib": ["ESNext"],
+        "types": ["bun"],
+        "noEmit": true,
+        "skipLibCheck": true,
         "allowSyntheticDefaultImports": true
-    },
+    }
 }
