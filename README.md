@@ -43,11 +43,11 @@ The coverage report (`bun run report`) is [published to GitHub Pages](https://st
 
 ## CLI Commands
 
-| Command              | Description                                                          |
-| -------------------- | -------------------------------------------------------------------- |
-| `bun start`          | Generate the emoji packs.                                            |
-| `bun dev`            | Generate the emoji packs, re-running on source changes.              |
-| `bun run report`     | Write an HTML coverage report into `emoji/` (run after `bun start`). |
-| `bun run typecheck`  | Type-check the sources with TypeScript.                              |
-| `bun run format`     | Run Prettier on the client. (check only)                             |
-| `bun run format:fix` | Run Prettier on the client. (automatically fixes bad formatting)     |
+| Command              | Description                                                           |
+| -------------------- | --------------------------------------------------------------------- |
+| `bun start`          | Generate the emoji packs.                                             |
+| `bun dev`            | Generate the emoji packs, re-running on source changes.               |
+| `bun run report`     | Write an HTML coverage report into `report/` (run after `bun start`). |
+| `bun run typecheck`  | Type-check the sources with TypeScript.                               |
+| `bun run format`     | Run Prettier on the client. (check only)                              |
+| `bun run format:fix` | Run Prettier on the client. (automatically fixes bad formatting)      |
